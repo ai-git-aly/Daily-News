@@ -1576,6 +1576,10 @@ img { max-width: 100%; height: auto; display: block; }
   /* Hide mobile auth section on tablet (still has right sidebar auth) */
   .mobile-auth-section { display: none; }
   .mobile-auth-forms { display: none; }
+
+  /* But keep the mobile auth section hidden on mobile too - JS will toggle it */
+  .mobile-auth-section.hidden { display: none !important; }
+  .mobile-auth-forms.hidden { display: none !important; }
 }
 
 /* Mobile: single column, drawer nav */
@@ -1639,6 +1643,27 @@ img { max-width: 100%; height: auto; display: block; }
   .drawer-overlay.active {
     display: block;
     opacity: 1;
+  }
+
+  .x-sidebar-left .mobile-auth-section,
+  .x-sidebar-left.drawer-open .mobile-auth-section {
+    display: block !important;
+    border-top: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .x-sidebar-left .mobile-auth-forms,
+  .x-sidebar-left.drawer-open .mobile-auth-forms {
+    display: block !important;
+  }
+
+  .x-sidebar-left .mobile-auth-section.hidden,
+  .x-sidebar-left.drawer-open .mobile-auth-section.hidden,
+  .x-sidebar-left .mobile-auth-forms.hidden,
+  .x-sidebar-left.drawer-open .mobile-auth-forms.hidden,
+  .mobile-auth-guest.hidden,
+  .mobile-auth-user.hidden {
+    display: none !important;
   }
 
   .mobile-drawer-toggle {
