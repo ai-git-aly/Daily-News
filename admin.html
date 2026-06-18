@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Daily News — Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
+  <link rel="stylesheet" href="./style.css" />
+<base target="_blank">
+</head>
+<body data-page="admin">
+
+  <!-- MOBILE OVERLAY -->
+  <div class="drawer-overlay" id="drawerOverlay"></div>
+
+  <div class="x-app-container">
+
+    <!-- LEFT SIDEBAR -->
+    <aside class="x-sidebar-left" id="navigationDrawer">
+      <div class="sidebar-sticky-wrapper">
+        <div class="sidebar-top">
+          <a class="x-brand" href="./main.html" aria-label="Daily News home">
+            <span class="x-logo-mark">DN</span>
+          </a>
+
+          <nav class="x-nav-menu">
+            <a class="x-nav-item" href="./main.html">
+              <svg class="x-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 1.696L.622 8.807l1.06 1.696L3 9.679V19.5C3 20.881 4.119 22 5.5 22h13c1.381 0 2.5-1.119 2.5-2.5V9.679l1.318.824 1.06-1.696L12 1.696zM12 16.5c-1.933 0-3.5-1.567-3.5-3.5s1.567-3.5 3.5-3.5 3.5 1.567 3.5 3.5-1.567 3.5-3.5 3.5z"></path></svg>
+              <span class="nav-label">Home</span>
+            </a>
+            <a class="x-nav-item active" href="./admin.html">
+              <svg class="x-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 1c-6.075 0-11 4.925-11 11s4.925 11 11 11 11-4.925 11-11-4.925-11-11-11zm0 2c4.963 0 9 4.037 9 9s-4.037 9-9 9-9-4.037-9-9 4.037-9 9-9zm0 2c-1.657 0-3 1.343-3 3s1.343 3 3 3 3-1.343 3-3-1.343-3-3-3zm0 8c-2.761 0-5 2.239-5 5h10c0-2.761-2.239-5-5-5z"></path></svg>
+              <span class="nav-label">Admin</span>
+            </a>
+
+            <button id="themeToggleBtn" class="x-nav-item theme-toggle-btn" type="button">
+              <span class="theme-icon">🌙</span>
+              <span class="nav-label">Dark Mode</span>
+            </button>
+          </nav>
+        </div>
+
+        <div class="x-sidebar-footer">
+          <button id="logoutBtn" class="x-btn-profile-signout hidden" type="button">
+            <div class="avatar-placeholder" id="userAvatar">U</div>
+            <div class="profile-details">
+              <span class="profile-name" id="sessionLabel">Sign out</span>
+              <span class="profile-handle" id="userHandle"></span>
+            </div>
+            <svg class="x-icon exit-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M16 17v-3h-3v-2h3V9h2v3h3v2h-3v3h-2zM12 3.786c-4.556 0-8.244 3.694-8.244 8.25s3.688 8.244 8.244 8.244 8.244-3.688 8.244-8.244-3.688-8.25-8.244-8.25z"></path></svg>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- CENTER: ADMIN DASHBOARD (SCROLLABLE) -->
+    <main class="x-main-timeline admin-timeline">
+      <header class="x-timeline-header">
+        <div class="header-top-row">
+          <button class="mobile-drawer-toggle" id="drawerToggle" aria-label="Open menu">
+            <svg class="burger-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3 6h18v2H3V6zm0 5h18v2H3v-2zm0 5h18v2H3v-2z"></path></svg>
+          </button>
+          <h1 class="timeline-title">Admin Dashboard</h1>
+        </div>
+      </header>
+
+      <!-- ADMIN GATE -->
+      <section id="adminGate" class="admin-gate">
+        <div class="gate-illustration">🔐</div>
+        <h2>Admin Access Required</h2>
+        <p>Sign in with an administrator account to manage articles, comments, and site content.</p>
+
+        <form id="adminSignInForm" class="auth-form compact-form">
+          <div class="field-grid">
+            <label class="field">
+              <span>Email</span>
+              <input id="adminEmail" type="email" autocomplete="email" required placeholder="admin@example.com" />
+            </label>
+            <label class="field">
+              <span>Password</span>
+              <input id="adminPassword" type="password" autocomplete="current-password" required placeholder="••••••••" />
+            </label>
+          </div>
+          <button class="x-btn-action primary" type="submit">Sign in to Admin</button>
+        </form>
+        <p id="adminGateMessage" class="muted"></p>
+        <a href="./main.html" class="back-link">← Back to Daily News</a>
+      </section>
+
+      <!-- ADMIN DASHBOARD -->
+      <section id="adminDashboard" class="hidden">
+
+        <!-- Stats Bar -->
+        <div class="admin-stats-bar">
+          <div class="stat-pill">
+            <span class="stat-value" id="statArticles">0</span>
+            <span class="stat-label">Articles</span>
+          </div>
+          <div class="stat-pill">
+            <span class="stat-value" id="statComments">0</span>
+            <span class="stat-label">Comments</span>
+          </div>
+          <div class="stat-pill">
+            <span class="stat-value" id="adminNameLabel">—</span>
+            <span class="stat-label" id="adminRoleLabel">Role</span>
+          </div>
+        </div>
+
+        <!-- Editor Panel -->
+        <div class="admin-panel">
+          <div class="panel-head">
+            <h2 id="articleModeLabel">Create article</h2>
+            <p>Write a post, attach a cover image, and publish directly to the live feed.</p>
+          </div>
+
+          <form id="articleForm" class="article-form">
+            <input id="articleId" type="hidden" />
+
+            <label class="field">
+              <span>Title</span>
+              <input id="articleTitle" type="text" maxlength="180" required placeholder="Enter article headline..." />
+            </label>
+
+            <label class="field">
+              <span>Category</span>
+              <select id="articleCategory" required>
+                <option value="">Select category...</option>
+                <option value="Technology">Technology</option>
+                <option value="Business">Business</option>
+                <option value="Health">Health</option>
+                <option value="Science">Science</option>
+                <option value="Entertainment">Entertainment</option>
+                <option value="Sports">Sports</option>
+                <option value="Politics">Politics</option>
+                <option value="Other">Other</option>
+              </select>
+            </label>
+
+            <div class="field">
+              <span>Story content</span>
+              <div class="editor-toolbar">
+                <button class="editor-btn" type="button" data-format="bold" title="Bold"><strong>B</strong></button>
+                <button class="editor-btn" type="button" data-format="italic" title="Italic"><em>I</em></button>
+                <button class="editor-btn" type="button" data-format="underline" title="Underline"><u>U</u></button>
+                <button class="editor-btn" type="button" data-format="formatBlock-h2" title="Heading">H2</button>
+                <button class="editor-btn" type="button" data-format="insertUnorderedList" title="List">• List</button>
+                <button class="editor-btn" type="button" data-format="createLink" title="Link">🔗</button>
+              </div>
+              <div id="articleContent" class="editor-content" contenteditable="true" placeholder="Write your story here..."></div>
+              <textarea id="articleContentHtml" style="display:none;"></textarea>
+            </div>
+
+            <label class="field file-field">
+              <span>Cover image</span>
+              <input id="articleImage" type="file" accept="image/jpeg,image/png,image/webp" />
+            </label>
+
+            <img id="imagePreview" class="image-preview hidden" alt="Preview" />
+            <p id="imageHelp" class="muted">Choose a JPG, PNG, or WebP image. Max 5MB. It will be stored in Supabase Storage.</p>
+
+            <div class="button-row">
+              <button id="saveArticleBtn" class="x-btn-action primary" type="submit">Publish article</button>
+              <button id="cancelEditBtn" class="x-btn-action secondary hidden" type="button">Cancel edit</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Articles List -->
+        <div class="admin-panel">
+          <div class="panel-head">
+            <h2>Existing articles</h2>
+            <p>Edit or remove stories from the live feed.</p>
+          </div>
+          <div id="adminArticles" class="stack-list">
+            <p class="muted loading-text">Loading articles...</p>
+          </div>
+        </div>
+
+        <!-- Comments Moderation -->
+        <div class="admin-panel full-width">
+          <div class="panel-head">
+            <h2>Comment moderation</h2>
+            <p>Review recent comments and remove anything that violates community guidelines.</p>
+          </div>
+          <div id="adminComments" class="stack-list">
+            <p class="muted loading-text">Loading comments...</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- RIGHT SIDEBAR -->
+    <aside class="x-sidebar-right">
+      <div class="sidebar-right-wrapper">
+        <div class="x-search-container">
+          <label class="searchbox">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M10.5 4a6.5 6.5 0 1 1 4.26 11.4l4.42 4.42-1.42 1.42-4.42-4.42A6.5 6.5 0 0 1 10.5 4Zm0 2a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9Z"></path></svg>
+            <input type="search" placeholder="Search admin..." disabled style="opacity:0.5" />
+          </label>
+        </div>
+
+        <div class="x-trends-panel">
+          <h2>Admin Tips</h2>
+          <div class="trend-item">
+            <span class="trend-meta">Best Practice</span>
+            <span class="trend-title">Use high-quality cover images (1200×630px) for best social sharing.</span>
+          </div>
+          <div class="trend-item">
+            <span class="trend-meta">Moderation</span>
+            <span class="trend-title">Review comments daily to maintain community quality.</span>
+          </div>
+        </div>
+
+        <footer class="x-footer-links">
+          <span>Admin Panel v1.0</span>
+          <span>© 2026 Daily News</span>
+        </footer>
+      </div>
+    </aside>
+
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script type="module" src="./logic.js"></script>
+  <script>
+    const toggleBtn = document.getElementById('drawerToggle');
+    const drawer = document.getElementById('navigationDrawer');
+    const overlay = document.getElementById('drawerOverlay');
+
+    if(toggleBtn && drawer && overlay) {
+      const toggleDrawer = () => { 
+        const isOpen = drawer.classList.toggle('drawer-open'); 
+        overlay.classList.toggle('active', isOpen); 
+        document.body.style.overflow = isOpen ? 'hidden' : '';
+        toggleBtn.setAttribute('aria-expanded', isOpen);
+      };
+      toggleBtn.addEventListener('click', toggleDrawer);
+      overlay.addEventListener('click', toggleDrawer);
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && drawer.classList.contains('drawer-open')) {
+          toggleDrawer();
+        }
+      });
+    }
+  </script>
+</body>
+</html>

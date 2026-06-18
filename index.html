@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Daily News — Home</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
+  <link rel="stylesheet" href="./style.css" />
+<base target="_blank">
+</head>
+<body data-page="main">
+
+  <!-- MOBILE OVERLAY -->
+  <div class="drawer-overlay" id="drawerOverlay"></div>
+
+  <div class="x-app-container">
+
+    <!-- LEFT SIDEBAR -->
+    <aside class="x-sidebar-left" id="navigationDrawer">
+      <div class="sidebar-sticky-wrapper">
+        <div class="sidebar-top">
+          <a class="x-brand" href="./main.html" aria-label="Daily News home">
+            <span class="x-logo-mark">DN</span>
+          </a>
+
+          <nav class="x-nav-menu">
+            <a class="x-nav-item active" href="./main.html">
+              <svg class="x-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 1.696L.622 8.807l1.06 1.696L3 9.679V19.5C3 20.881 4.119 22 5.5 22h13c1.381 0 2.5-1.119 2.5-2.5V9.679l1.318.824 1.06-1.696L12 1.696zM12 16.5c-1.933 0-3.5-1.567-3.5-3.5s1.567-3.5 3.5-3.5 3.5 1.567 3.5 3.5-1.567 3.5-3.5 3.5z"></path></svg>
+              <span class="nav-label">Home</span>
+            </a>
+            <a class="x-nav-item" href="#explore" onclick="event.preventDefault(); alert('Explore coming soon');">
+              <svg class="x-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M21.53 20.47l-3.66-3.66C19.195 15.24 20 13.214 20 11c0-4.97-4.03-9-9-9s-9 4.03-9 9 4.03 9 9 9c2.215 0 4.24-.804 5.808-2.13l3.66 3.66c.147.146.34.22.53.22s.385-.073.53-.22c.295-.293.295-.767 0-1.06zM3.5 11c0-4.135 3.365-7.5 7.5-7.5s7.5 3.365 7.5 7.5-3.365 7.5-7.5 7.5-7.5-3.365-7.5-7.5z"></path></svg>
+              <span class="nav-label">Explore</span>
+            </a>
+
+            <!-- ADMIN LINK: Hidden by default -->
+            <a class="x-nav-item hidden" href="./admin.html" id="adminNavBtn">
+              <svg class="x-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 1c-6.075 0-11 4.925-11 11s4.925 11 11 11 11-4.925 11-11-4.925-11-11-11zm0 2c4.963 0 9 4.037 9 9s-4.037 9-9 9-9-4.037-9-9 4.037-9 9-9zm0 2c-1.657 0-3 1.343-3 3s1.343 3 3 3 3-1.343 3-3-1.343-3-3-3zm0 8c-2.761 0-5 2.239-5 5h10c0-2.761-2.239-5-5-5z"></path></svg>
+              <span class="nav-label">Admin</span>
+            </a>
+
+            <button id="themeToggleBtn" class="x-nav-item theme-toggle-btn" type="button">
+              <span class="theme-icon">🌙</span>
+              <span class="nav-label">Dark Mode</span>
+            </button>
+          </nav>
+        </div>
+
+        <div class="x-sidebar-footer">
+          <button id="logoutBtn" class="x-btn-profile-signout hidden" type="button">
+            <div class="avatar-placeholder" id="userAvatar">U</div>
+            <div class="profile-details">
+              <span class="profile-name" id="sessionLabel">Sign out</span>
+              <span class="profile-handle" id="userHandle"></span>
+            </div>
+            <svg class="x-icon exit-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M16 17v-3h-3v-2h3V9h2v3h3v2h-3v3h-2zM12 3.786c-4.556 0-8.244 3.694-8.244 8.25s3.688 8.244 8.244 8.244 8.244-3.688 8.244-8.244-3.688-8.25-8.244-8.25z"></path></svg>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- CENTER TIMELINE (SCROLLABLE) -->
+    <main class="x-main-timeline">
+      <header class="x-timeline-header">
+        <div class="header-top-row">
+          <button class="mobile-drawer-toggle" id="drawerToggle" aria-label="Open menu">
+            <svg class="burger-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3 6h18v2H3V6zm0 5h18v2H3v-2zm0 5h18v2H3v-2z"></path></svg>
+          </button>
+          <h1 class="timeline-title">Home</h1>
+        </div>
+        <div class="timeline-tabs">
+          <div class="tab-item active"><span>For you</span></div>
+          <div class="tab-item"><span>Following</span></div>
+        </div>
+      </header>
+
+      <section class="x-hero-compose">
+        <div class="hero-avatar">📰</div>
+        <div class="compose-area">
+          <h2>Daily News</h2>
+          <p>Stay informed with fresh, timely stories. Discover trending topics from around the world.</p>
+        </div>
+      </section>
+
+      <section class="feed-panel">
+        <div id="newsGrid" class="x-news-stream"></div>
+        <div id="emptyState" class="empty-state hidden">
+          <div class="empty-illustration">📭</div>
+          <h3>No stories available yet</h3>
+          <p>Check back soon for fresh updates from our editorial team.</p>
+        </div>
+      </section>
+    </main>
+
+    <!-- RIGHT SIDEBAR -->
+    <aside class="x-sidebar-right">
+      <div class="sidebar-right-wrapper">
+        <div class="x-search-container">
+          <label class="searchbox">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M10.5 4a6.5 6.5 0 1 1 4.26 11.4l4.42 4.42-1.42 1.42-4.42-4.42A6.5 6.5 0 0 1 10.5 4Zm0 2a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9Z"></path></svg>
+            <input id="searchInput" type="search" placeholder="Search stories..." autocomplete="off" />
+          </label>
+        </div>
+
+        <section class="x-panel-card auth-panel" id="authPanel">
+          <div class="panel-head">
+            <h2>New to Daily News?</h2>
+            <p>Sign up now to get your own personalized timeline and join the conversation.</p>
+          </div>
+          <div class="auth-tabs" role="tablist">
+            <button class="tab-btn active" type="button" data-auth-tab="signin">Sign in</button>
+            <button class="tab-btn" type="button" data-auth-tab="signup">Sign up</button>
+          </div>
+          <form id="signinForm" class="auth-form">
+            <div class="field-grid">
+              <input id="signinEmail" type="email" placeholder="Email" required autocomplete="email" />
+              <input id="signinPassword" type="password" placeholder="Password" required autocomplete="current-password" />
+            </div>
+            <button class="x-btn-action primary" type="submit">Sign in</button>
+          </form>
+          <form id="signupForm" class="auth-form hidden">
+            <div class="field-grid">
+              <input id="signupName" type="text" placeholder="Full name" required autocomplete="name" />
+              <input id="signupEmail" type="email" placeholder="Email" required autocomplete="email" />
+              <input id="signupPassword" type="password" placeholder="Password" minlength="6" required autocomplete="new-password" />
+            </div>
+            <button class="x-btn-action primary" type="submit">Create account</button>
+          </form>
+          <p class="muted" id="authMessage"></p>
+        </section>
+
+        <div class="x-trends-panel">
+          <h2>What's happening</h2>
+          <div class="trend-item">
+            <span class="trend-meta">Trending · Politics</span>
+            <span class="trend-title">Global Economics Update</span>
+            <span class="trend-posts">12.5K posts</span>
+          </div>
+          <div class="trend-item">
+            <span class="trend-meta">Trending · Technology</span>
+            <span class="trend-title">AI Revolution 2026</span>
+            <span class="trend-posts">45.2K posts</span>
+          </div>
+          <div class="trend-item">
+            <span class="trend-meta">Trending · Sports</span>
+            <span class="trend-title">World Cup Qualifiers</span>
+            <span class="trend-posts">8.9K posts</span>
+          </div>
+        </div>
+
+        <footer class="x-footer-links">
+          <a href="#">Terms</a>
+          <a href="#">Privacy</a>
+          <a href="#">Cookies</a>
+          <span>© 2026 Daily News</span>
+        </footer>
+      </div>
+    </aside>
+
+  </div>
+
+  <!-- ARTICLE MODAL -->
+  <div class="modal hidden" id="articleModal" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="modal-backdrop" data-close-modal></div>
+    <div class="modal-card">
+      <header class="modal-sticky-header">
+        <button class="modal-close" type="button" data-close-modal aria-label="Close">✕</button>
+        <span class="modal-header-text">Post</span>
+      </header>
+      <img id="modalImage" class="modal-image" alt="" />
+      <div class="modal-body">
+        <div class="article-meta">
+          <div class="avatar-placeholder-sm">✍️</div>
+          <div class="meta-core">
+            <strong id="modalAuthor"></strong>
+            <span id="modalDate" class="meta-date"></span>
+          </div>
+        </div>
+        <h2 id="modalTitle" class="modal-title"></h2>
+        <div id="modalContent" class="article-body"></div>
+
+        <div class="modal-stats">
+          <span><strong id="modalCommentCount">0</strong> Comments</span>
+        </div>
+
+        <section class="comments-section">
+          <h3>Comments</h3>
+          <span id="commentHint" class="muted"></span>
+          <form id="commentForm" class="comment-form hidden" style="margin-top:16px;">
+            <div class="comment-input-row">
+               <textarea id="commentBody" rows="3" placeholder="Post your reply..." required maxlength="500"></textarea>
+            </div>
+            <div class="comment-action-row">
+              <span class="char-count" id="charCount">0/500</span>
+              <button class="x-btn-action primary btn-sm" type="submit">Reply</button>
+            </div>
+          </form>
+          <div id="commentsList" class="comments-list" style="margin-top:20px;"></div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <template id="cardTemplate">
+    <article class="news-card">
+      <div class="card-avatar-col">
+        <div class="news-avatar-badge">📰</div>
+      </div>
+      <div class="card-content-col">
+        <div class="card-meta">
+          <span class="card-author"></span>
+          <span class="card-date-separator">·</span>
+          <span class="card-date"></span>
+        </div>
+        <h3 class="card-title"></h3>
+        <p class="card-text"></p>
+        <img class="card-image" alt="" loading="lazy" />
+        <div class="card-actions">
+          <button class="btn-tweet-action open-article" type="button" data-action="open-article">
+            <svg viewBox="0 0 24 24"><path fill="currentColor" d="M1.998 5.5c0-1.381 1.119-2.5 2.5-2.5h15c1.381 0 2.5 1.119 2.5 2.5v13c0 1.381-1.119 2.5-2.5 2.5h-15c-1.381 0-2.5-1.119-2.5-2.5v-13zm2.5-.5c-.276 0-.5.224-.5.5v.94l7.54 5.14 7.46-5.12v-.96c0-.276-.224-.5-.5-.5h-15zm16 3.12l-7.98 5.48-8.02-5.46v9.36c0 .276.224.5.5.5h15c.276 0 .5-.224.5-.5V8.12z"></path></svg>
+            <span>Read story</span>
+          </button>
+        </div>
+      </div>
+    </article>
+  </template>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script type="module" src="./logic.js"></script>
+  <script>
+    // Mobile drawer toggle
+    const toggleBtn = document.getElementById('drawerToggle');
+    const drawer = document.getElementById('navigationDrawer');
+    const overlay = document.getElementById('drawerOverlay');
+
+    if(toggleBtn && drawer && overlay) {
+      const toggleDrawer = () => { 
+        const isOpen = drawer.classList.toggle('drawer-open'); 
+        overlay.classList.toggle('active', isOpen); 
+        document.body.style.overflow = isOpen ? 'hidden' : '';
+        toggleBtn.setAttribute('aria-expanded', isOpen);
+      };
+      toggleBtn.addEventListener('click', toggleDrawer);
+      overlay.addEventListener('click', toggleDrawer);
+
+      // Close on escape key
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && drawer.classList.contains('drawer-open')) {
+          toggleDrawer();
+        }
+      });
+    }
+  </script>
+</body>
+</html>
