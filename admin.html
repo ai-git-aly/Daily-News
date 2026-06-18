@@ -9,7 +9,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
   <link rel="stylesheet" href="./style.css" />
-<base target="_blank">
 </head>
 <body data-page="admin">
 
@@ -22,7 +21,8 @@
     <aside class="x-sidebar-left" id="navigationDrawer">
       <div class="sidebar-sticky-wrapper">
         <div class="sidebar-top">
-          <a class="x-brand" href="./main.html" aria-label="Daily News home">
+          <!-- DN Logo toggles drawer on mobile -->
+          <a class="x-brand drawer-toggle-logo" href="#" id="drawerToggleLogo" aria-label="Toggle menu">
             <span class="x-logo-mark">DN</span>
           </a>
 
@@ -35,12 +35,49 @@
               <svg class="x-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 1c-6.075 0-11 4.925-11 11s4.925 11 11 11 11-4.925 11-11-4.925-11-11-11zm0 2c4.963 0 9 4.037 9 9s-4.037 9-9 9-9-4.037-9-9 4.037-9 9-9zm0 2c-1.657 0-3 1.343-3 3s1.343 3 3 3 3-1.343 3-3-1.343-3-3-3zm0 8c-2.761 0-5 2.239-5 5h10c0-2.761-2.239-5-5-5z"></path></svg>
               <span class="nav-label">Admin</span>
             </a>
-
+            
             <button id="themeToggleBtn" class="x-nav-item theme-toggle-btn" type="button">
               <span class="theme-icon">🌙</span>
               <span class="nav-label">Dark Mode</span>
             </button>
           </nav>
+        </div>
+
+        <!-- MOBILE AUTH SECTION (Sign In / Sign Up / Profile) -->
+        <div class="mobile-auth-section" id="mobileAuthSection">
+          <!-- Guest state -->
+          <div class="mobile-auth-guest" id="mobileAuthGuest">
+            <p class="mobile-auth-title">Admin Access</p>
+            <p class="mobile-auth-subtitle">Sign in with administrator credentials.</p>
+            <div class="mobile-auth-buttons">
+              <button class="x-btn-action primary mobile-auth-btn" id="mobileSigninBtn" type="button">Sign In</button>
+            </div>
+          </div>
+          <!-- Logged in state -->
+          <div class="mobile-auth-user hidden" id="mobileAuthUser">
+            <div class="mobile-user-profile">
+              <div class="avatar-placeholder mobile-user-avatar" id="mobileUserAvatar">U</div>
+              <div class="mobile-user-info">
+                <span class="mobile-user-name" id="mobileUserName">User</span>
+                <span class="mobile-user-handle" id="mobileUserHandle">@user</span>
+              </div>
+            </div>
+            <button class="x-btn-action secondary mobile-auth-btn" id="mobileLogoutBtn" type="button">Log Out</button>
+          </div>
+        </div>
+
+        <!-- Mobile Auth Forms (inline in drawer) -->
+        <div class="mobile-auth-forms hidden" id="mobileAuthForms">
+          <div class="mobile-auth-tabs">
+            <button class="mobile-tab-btn active" type="button" data-mobile-tab="signin">Sign In</button>
+          </div>
+          <form id="mobileSigninForm" class="mobile-auth-form">
+            <input id="mobileSigninEmail" type="email" placeholder="Email" required autocomplete="email" />
+            <input id="mobileSigninPassword" type="password" placeholder="Password" required autocomplete="current-password" />
+            <button class="x-btn-action primary mobile-auth-btn" type="submit">Sign In</button>
+          </form>
+          <p class="muted mobile-auth-message" id="mobileAuthMessage"></p>
+          <button class="mobile-auth-back" id="mobileAuthBack" type="button">← Back</button>
         </div>
 
         <div class="x-sidebar-footer">
@@ -67,12 +104,12 @@
         </div>
       </header>
 
-      <!-- ADMIN GATE -->
+      <!-- ADMIN GATE (shown when not logged in or not admin) -->
       <section id="adminGate" class="admin-gate">
         <div class="gate-illustration">🔐</div>
         <h2>Admin Access Required</h2>
-        <p>Sign in with an administrator account to manage articles, comments, and site content.</p>
-
+        <p>Sign in with an administrator account to manage articles, comments, reports, and site content.</p>
+        
         <form id="adminSignInForm" class="auth-form compact-form">
           <div class="field-grid">
             <label class="field">
@@ -90,9 +127,9 @@
         <a href="./main.html" class="back-link">← Back to Daily News</a>
       </section>
 
-      <!-- ADMIN DASHBOARD -->
+      <!-- ADMIN DASHBOARD (shown only for admins) -->
       <section id="adminDashboard" class="hidden">
-
+        
         <!-- Stats Bar -->
         <div class="admin-stats-bar">
           <div class="stat-pill">
@@ -102,6 +139,18 @@
           <div class="stat-pill">
             <span class="stat-value" id="statComments">0</span>
             <span class="stat-label">Comments</span>
+          </div>
+          <div class="stat-pill">
+            <span class="stat-value" id="statReports">0</span>
+            <span class="stat-label">Reports</span>
+          </div>
+          <div class="stat-pill">
+            <span class="stat-value" id="statTotalViews">0</span>
+            <span class="stat-label">Total Views</span>
+          </div>
+          <div class="stat-pill">
+            <span class="stat-value" id="statTotalLikes">0</span>
+            <span class="stat-label">Total Likes</span>
           </div>
           <div class="stat-pill">
             <span class="stat-value" id="adminNameLabel">—</span>
@@ -118,7 +167,7 @@
 
           <form id="articleForm" class="article-form">
             <input id="articleId" type="hidden" />
-
+            
             <label class="field">
               <span>Title</span>
               <input id="articleTitle" type="text" maxlength="180" required placeholder="Enter article headline..." />
@@ -172,7 +221,7 @@
         <div class="admin-panel">
           <div class="panel-head">
             <h2>Existing articles</h2>
-            <p>Edit or remove stories from the live feed.</p>
+            <p>Edit or remove stories from the live feed. View engagement stats for each article.</p>
           </div>
           <div id="adminArticles" class="stack-list">
             <p class="muted loading-text">Loading articles...</p>
@@ -189,6 +238,18 @@
             <p class="muted loading-text">Loading comments...</p>
           </div>
         </div>
+
+        <!-- Reports Moderation -->
+        <div class="admin-panel full-width">
+          <div class="panel-head">
+            <h2>Reports moderation</h2>
+            <p>Review user reports and take action on flagged content.</p>
+          </div>
+          <div id="adminReports" class="stack-list">
+            <p class="muted loading-text">Loading reports...</p>
+          </div>
+        </div>
+
       </section>
     </main>
 
@@ -210,12 +271,16 @@
           </div>
           <div class="trend-item">
             <span class="trend-meta">Moderation</span>
-            <span class="trend-title">Review comments daily to maintain community quality.</span>
+            <span class="trend-title">Review reports daily to maintain community quality.</span>
+          </div>
+          <div class="trend-item">
+            <span class="trend-meta">Analytics</span>
+            <span class="trend-title">Articles with images get 3x more views on average.</span>
           </div>
         </div>
 
         <footer class="x-footer-links">
-          <span>Admin Panel v1.0</span>
+          <span>Admin Panel v2.0</span>
           <span>© 2026 Daily News</span>
         </footer>
       </div>
@@ -226,26 +291,39 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script type="module" src="./logic.js"></script>
   <script>
+    // Mobile drawer toggle
     const toggleBtn = document.getElementById('drawerToggle');
     const drawer = document.getElementById('navigationDrawer');
     const overlay = document.getElementById('drawerOverlay');
-
+    const logoToggle = document.getElementById('drawerToggleLogo');
+    
+    function toggleDrawer() { 
+      const isOpen = drawer.classList.toggle('drawer-open'); 
+      overlay.classList.toggle('active', isOpen); 
+      document.body.style.overflow = isOpen ? 'hidden' : '';
+      if (toggleBtn) toggleBtn.setAttribute('aria-expanded', isOpen);
+    }
+    
     if(toggleBtn && drawer && overlay) {
-      const toggleDrawer = () => { 
-        const isOpen = drawer.classList.toggle('drawer-open'); 
-        overlay.classList.toggle('active', isOpen); 
-        document.body.style.overflow = isOpen ? 'hidden' : '';
-        toggleBtn.setAttribute('aria-expanded', isOpen);
-      };
       toggleBtn.addEventListener('click', toggleDrawer);
       overlay.addEventListener('click', toggleDrawer);
-
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && drawer.classList.contains('drawer-open')) {
+    }
+    
+    // DN Logo toggles drawer on mobile
+    if (logoToggle && drawer) {
+      logoToggle.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (window.innerWidth <= 680) {
           toggleDrawer();
         }
       });
     }
+    
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && drawer.classList.contains('drawer-open')) {
+        toggleDrawer();
+      }
+    });
   </script>
 </body>
 </html>

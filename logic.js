@@ -17,7 +17,12 @@ const state = {
   selectedArticle: null,
   comments: [],
   search: "",
+  activeCategory: "all",
+  activeFeedTab: "foryou",
   adminComments: [],
+  adminReports: [],
+  userVotes: {},
+  userReports: {},
   theme: "light"
 };
 
@@ -26,7 +31,6 @@ const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selec
 
 const dom = {};
 
-// Utility functions
 function truncateText(text, maxLength = 160) {
   if (!text) return "";
   const clean = text.replace(/<[^>]*>/g, ' ');
@@ -54,12 +58,22 @@ function escapeHTML(text) {
   return div.innerHTML;
 }
 
+function formatNumber(num) {
+  if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+  if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+  return num.toString();
+}
+
 document.addEventListener("DOMContentLoaded", init);
 
 async function init() {
   cacheDom();
   initTheme();
   bindStaticEvents();
+  bindMobileAuthEvents();
+  bindCategoryFilters();
+  bindFeedTabs();
+  bindExploreNav();
 
   const { data } = await supabase.auth.getSession();
   setSession(data.session);
@@ -82,8 +96,9 @@ async function init() {
   });
 }
 
+/* ================= DOM CACHE ================= */
 function cacheDom() {
-  // Navigation & Theme
+  // Navigation
   dom.adminNavBtn = $("#adminNavBtn");
   dom.themeToggleBtn = $("#themeToggleBtn");
   dom.logoutBtn = $("#logoutBtn");
@@ -91,7 +106,7 @@ function cacheDom() {
   dom.userHandle = $("#userHandle");
   dom.userAvatar = $("#userAvatar");
 
-  // Main page
+  // Auth Panel (right sidebar)
   dom.authPanel = $("#authPanel");
   dom.authMessage = $("#authMessage");
   dom.signinForm = $("#signinForm");
@@ -102,18 +117,60 @@ function cacheDom() {
   dom.signupEmail = $("#signupEmail");
   dom.signupPassword = $("#signupPassword");
   dom.authTabs = $$(".tab-btn");
+
+  // Mobile Auth
+  dom.mobileAuthSection = $("#mobileAuthSection");
+  dom.mobileAuthGuest = $("#mobileAuthGuest");
+  dom.mobileAuthUser = $("#mobileAuthUser");
+  dom.mobileSigninBtn = $("#mobileSigninBtn");
+  dom.mobileSignupBtn = $("#mobileSignupBtn");
+  dom.mobileLogoutBtn = $("#mobileLogoutBtn");
+  dom.mobileAuthForms = $("#mobileAuthForms");
+  dom.mobileAuthBack = $("#mobileAuthBack");
+  dom.mobileAuthMessage = $("#mobileAuthMessage");
+  dom.mobileSigninForm = $("#mobileSigninForm");
+  dom.mobileSignupForm = $("#mobileSignupForm");
+  dom.mobileSigninEmail = $("#mobileSigninEmail");
+  dom.mobileSigninPassword = $("#mobileSigninPassword");
+  dom.mobileSignupName = $("#mobileSignupName");
+  dom.mobileSignupEmail = $("#mobileSignupEmail");
+  dom.mobileSignupPassword = $("#mobileSignupPassword");
+  dom.mobileUserName = $("#mobileUserName");
+  dom.mobileUserHandle = $("#mobileUserHandle");
+  dom.mobileUserAvatar = $("#mobileUserAvatar");
+  dom.mobileAuthTabs = $$(".mobile-tab-btn");
+
+  // Search & Feed
   dom.searchInput = $("#searchInput");
+  dom.explorePanel = $("#explorePanel");
+  dom.exploreResults = $("#exploreResults");
+  dom.exploreNavBtn = $("#exploreNavBtn");
   dom.newsGrid = $("#newsGrid");
   dom.emptyState = $("#emptyState");
+  dom.categoryFilterBar = $("#categoryFilterBar");
+  dom.feedTabs = $$("[data-feed-tab]");
 
-  // Modal
+  // Article Modal
   dom.articleModal = $("#articleModal");
   dom.modalImage = $("#modalImage");
   dom.modalAuthor = $("#modalAuthor");
   dom.modalDate = $("#modalDate");
   dom.modalTitle = $("#modalTitle");
   dom.modalContent = $("#modalContent");
-  dom.modalCommentCount = $("#modalCommentCount");
+  dom.modalViewCount = $("#modalViewCount");
+  dom.modalLikeCount = $("#modalLikeCount");
+  dom.modalDislikeCount = $("#modalDislikeCount");
+  dom.modalLikeBtn = $("#modalLikeBtn");
+  dom.modalDislikeBtn = $("#modalDislikeBtn");
+  dom.modalReportBtn = $("#modalReportBtn");
+
+  // Report Modal
+  dom.reportModal = $("#reportModal");
+  dom.reportForm = $("#reportForm");
+  dom.reportDetails = $("#reportDetails");
+  dom.reportMessage = $("#reportMessage");
+
+  // Comments
   dom.commentsList = $("#commentsList");
   dom.commentForm = $("#commentForm");
   dom.commentBody = $("#commentBody");
@@ -131,6 +188,9 @@ function cacheDom() {
   dom.adminRoleLabel = $("#adminRoleLabel");
   dom.statArticles = $("#statArticles");
   dom.statComments = $("#statComments");
+  dom.statReports = $("#statReports");
+  dom.statTotalViews = $("#statTotalViews");
+  dom.statTotalLikes = $("#statTotalLikes");
   dom.articleForm = $("#articleForm");
   dom.articleModeLabel = $("#articleModeLabel");
   dom.articleId = $("#articleId");
@@ -144,9 +204,11 @@ function cacheDom() {
   dom.cancelEditBtn = $("#cancelEditBtn");
   dom.saveArticleBtn = $("#saveArticleBtn");
   dom.adminArticles = $("#adminArticles");
-  dom.adminComments = $("#adminComments");
+  dom.adminCommentsList = $("#adminComments");
+  dom.adminReportsList = $("#adminReports");
 }
 
+/* ================= EVENT BINDINGS ================= */
 function bindStaticEvents() {
   if (dom.themeToggleBtn) dom.themeToggleBtn.addEventListener("click", toggleTheme);
   if (dom.logoutBtn) dom.logoutBtn.addEventListener("click", signOut);
@@ -166,6 +228,20 @@ function bindStaticEvents() {
       }
     });
   }
+
+  if (dom.reportModal) {
+    dom.reportModal.addEventListener("click", (event) => {
+      if (event.target.hasAttribute?.("data-close-modal")) {
+        closeReportModal();
+      }
+    });
+  }
+
+  if (dom.modalLikeBtn) dom.modalLikeBtn.addEventListener("click", () => handleVote('like'));
+  if (dom.modalDislikeBtn) dom.modalDislikeBtn.addEventListener("click", () => handleVote('dislike'));
+  if (dom.modalReportBtn) dom.modalReportBtn.addEventListener("click", openReportModal);
+
+  if (dom.reportForm) dom.reportForm.addEventListener("submit", handleReport);
 
   if (dom.commentForm) dom.commentForm.addEventListener("submit", handleAddComment);
   if (dom.commentBody && dom.charCount) {
@@ -193,7 +269,6 @@ function bindStaticEvents() {
     });
   }
 
-  // Rich text editor
   $$("[data-format]").forEach((btn) => {
     btn.addEventListener("click", (e) => {
       e.preventDefault();
@@ -225,7 +300,149 @@ function bindStaticEvents() {
   }
 }
 
-// ================= THEME ENGINE =================
+/* ================= MOBILE AUTH EVENTS ================= */
+function bindMobileAuthEvents() {
+  if (dom.mobileSigninBtn) {
+    dom.mobileSigninBtn.addEventListener("click", () => showMobileAuthForm("signin"));
+  }
+  if (dom.mobileSignupBtn) {
+    dom.mobileSignupBtn.addEventListener("click", () => showMobileAuthForm("signup"));
+  }
+
+  if (dom.mobileAuthBack) {
+    dom.mobileAuthBack.addEventListener("click", () => {
+      if (dom.mobileAuthForms) dom.mobileAuthForms.classList.add("hidden");
+      if (dom.mobileAuthSection) dom.mobileAuthSection.classList.remove("hidden");
+    });
+  }
+
+  dom.mobileAuthTabs.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const tab = btn.dataset.mobileTab;
+      dom.mobileAuthTabs.forEach(b => b.classList.toggle("active", b === btn));
+      if (dom.mobileSigninForm) dom.mobileSigninForm.classList.toggle("hidden", tab !== "signin");
+      if (dom.mobileSignupForm) dom.mobileSignupForm.classList.toggle("hidden", tab !== "signup");
+    });
+  });
+
+  if (dom.mobileSigninForm) {
+    dom.mobileSigninForm.addEventListener("submit", handleMobileSignIn);
+  }
+  if (dom.mobileSignupForm) {
+    dom.mobileSignupForm.addEventListener("submit", handleMobileSignUp);
+  }
+
+  if (dom.mobileLogoutBtn) {
+    dom.mobileLogoutBtn.addEventListener("click", signOut);
+  }
+}
+
+function showMobileAuthForm(type) {
+  if (dom.mobileAuthSection) dom.mobileAuthSection.classList.add("hidden");
+  if (dom.mobileAuthForms) dom.mobileAuthForms.classList.remove("hidden");
+
+  dom.mobileAuthTabs.forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.mobileTab === type);
+  });
+
+  if (dom.mobileSigninForm) dom.mobileSigninForm.classList.toggle("hidden", type !== "signin");
+  if (dom.mobileSignupForm) dom.mobileSignupForm.classList.toggle("hidden", type !== "signup");
+}
+
+async function handleMobileSignIn(event) {
+  event.preventDefault();
+  const email = dom.mobileSigninEmail?.value.trim();
+  const password = dom.mobileSigninPassword?.value;
+
+  if (!email || !password) return;
+  setMobileAuthMessage("Signing in...");
+
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) {
+    setMobileAuthMessage(error.message);
+    return;
+  }
+
+  setMobileAuthMessage("Signed in successfully.");
+  if (dom.mobileSigninForm) dom.mobileSigninForm.reset();
+
+  setTimeout(() => {
+    if (dom.mobileAuthForms) dom.mobileAuthForms.classList.add("hidden");
+    if (dom.mobileAuthSection) dom.mobileAuthSection.classList.remove("hidden");
+  }, 800);
+}
+
+async function handleMobileSignUp(event) {
+  event.preventDefault();
+  const fullName = dom.mobileSignupName?.value.trim();
+  const email = dom.mobileSignupEmail?.value.trim();
+  const password = dom.mobileSignupPassword?.value;
+
+  if (!fullName || !email || !password) return;
+  setMobileAuthMessage("Creating account...");
+
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: { data: { full_name: fullName } }
+  });
+
+  if (error) {
+    setMobileAuthMessage(error.message);
+    return;
+  }
+
+  if (dom.mobileSignupForm) dom.mobileSignupForm.reset();
+  setMobileAuthMessage(data.session ? "Account created and signed in!" : "Check your email to confirm, then sign in.");
+}
+
+function setMobileAuthMessage(msg) {
+  if (dom.mobileAuthMessage) dom.mobileAuthMessage.textContent = msg;
+}
+
+/* ================= CATEGORY FILTERS ================= */
+function bindCategoryFilters() {
+  if (!dom.categoryFilterBar) return;
+
+  const pills = dom.categoryFilterBar.querySelectorAll(".category-pill");
+  pills.forEach((pill) => {
+    pill.addEventListener("click", () => {
+      pills.forEach(p => p.classList.remove("active"));
+      pill.classList.add("active");
+      state.activeCategory = pill.dataset.category || "all";
+      applySearchAndRender();
+    });
+  });
+}
+
+/* ================= FEED TABS ================= */
+function bindFeedTabs() {
+  if (!dom.feedTabs || dom.feedTabs.length === 0) return;
+
+  dom.feedTabs.forEach((tab) => {
+    tab.addEventListener("click", () => {
+      dom.feedTabs.forEach(t => t.classList.remove("active"));
+      tab.classList.add("active");
+      state.activeFeedTab = tab.dataset.feedTab || "foryou";
+      applySearchAndRender();
+    });
+  });
+}
+
+/* ================= EXPLORE NAV ================= */
+function bindExploreNav() {
+  if (!dom.exploreNavBtn) return;
+
+  dom.exploreNavBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    if (dom.searchInput) {
+      dom.searchInput.focus();
+      dom.searchInput.scrollIntoView({ behavior: "smooth" });
+    }
+  });
+}
+
+/* ================= THEME ENGINE ================= */
 function initTheme() {
   const savedTheme = localStorage.getItem("theme") || "light";
   state.theme = savedTheme;
@@ -245,11 +462,11 @@ function updateThemeUI() {
   if (!dom.themeToggleBtn) return;
   const isLight = state.theme === "light";
   const icon = isLight ? "🌙" : "☀️";
-  const label = isLight ? "Dark Mode" : "White Mode";
+  const label = isLight ? "Dark Mode" : "Light Mode";
   dom.themeToggleBtn.innerHTML = `<span class="theme-icon">${icon}</span><span class="nav-label">${label}</span>`;
 }
 
-// ================= AUTH & SESSION =================
+/* ================= AUTH & SESSION ================= */
 function setAuthTab(tab) {
   const signinActive = tab === "signin";
   dom.authTabs.forEach((btn) => btn.classList.toggle("active", btn.dataset.authTab === tab));
@@ -319,16 +536,20 @@ function updateSessionUI() {
   const fullName = state.profile?.full_name || state.user?.email?.split("@")[0] || "Guest";
   const handle = state.user?.email || "";
 
-  // Sidebar profile
   if (dom.logoutBtn) dom.logoutBtn.classList.toggle("hidden", !isLoggedIn);
   if (dom.sessionLabel) dom.sessionLabel.textContent = isLoggedIn ? fullName : "Sign in";
   if (dom.userHandle) dom.userHandle.textContent = isLoggedIn ? `@${handle.split("@")[0]}` : "";
   if (dom.userAvatar) dom.userAvatar.textContent = fullName.charAt(0).toUpperCase();
 
-  // Auth panel on main page
   if (dom.authPanel) dom.authPanel.classList.toggle("hidden", isLoggedIn && state.page === "main");
 
-  // Admin logic: ONLY show admin nav if user has is_admin=true OR matches admin email
+  if (dom.mobileAuthGuest) dom.mobileAuthGuest.classList.toggle("hidden", isLoggedIn);
+  if (dom.mobileAuthUser) dom.mobileAuthUser.classList.toggle("hidden", !isLoggedIn);
+
+  if (dom.mobileUserName) dom.mobileUserName.textContent = fullName;
+  if (dom.mobileUserHandle) dom.mobileUserHandle.textContent = isLoggedIn ? `@${handle.split("@")[0]}` : "@user";
+  if (dom.mobileUserAvatar) dom.mobileUserAvatar.textContent = fullName.charAt(0).toUpperCase();
+
   const isTargetUserEmail = state.user?.email === "kiyikokinini@gmail.com";
   const hasAdminPrivileges = Boolean(state.profile?.is_admin) || isTargetUserEmail;
 
@@ -336,7 +557,6 @@ function updateSessionUI() {
     dom.adminNavBtn.classList.toggle("hidden", !hasAdminPrivileges);
   }
 
-  // Admin page specific
   if (state.page === "admin") {
     if (dom.adminGate) {
       const showGate = !isLoggedIn || !hasAdminPrivileges;
@@ -358,7 +578,7 @@ function updateSessionUI() {
   if (dom.adminRoleLabel) dom.adminRoleLabel.textContent = hasAdminPrivileges ? "Administrator" : "Reader";
 }
 
-// ================= AUTH HANDLERS =================
+/* ================= AUTH HANDLERS ================= */
 async function handleSignIn(event) {
   event.preventDefault();
   const email = dom.signinEmail?.value.trim();
@@ -427,21 +647,25 @@ async function signOut() {
   }
   state.profile = null;
   state.selectedArticle = null;
+  state.userVotes = {};
+  state.userReports = {};
   closeArticleModal();
   setMessage("auth", "Signed out.");
   setMessage("admin", "Signed out.");
+  setMobileAuthMessage("");
 }
 
 function setMessage(scope, message) {
   if (scope === "auth" && dom.authMessage) dom.authMessage.textContent = message;
   if (scope === "admin" && dom.adminGateMessage) dom.adminGateMessage.textContent = message;
+  if (scope === "report" && dom.reportMessage) dom.reportMessage.textContent = message;
 }
 
-// ================= ARTICLES =================
+/* ================= ARTICLES ================= */
 async function loadArticles() {
   const { data, error } = await supabase
     .from("news_articles")
-    .select("id, title, content, category, image_url, image_path, author_name, author_id, created_at, updated_at")
+    .select("id, title, content, category, image_url, image_path, author_name, author_id, created_at, updated_at, view_count, like_count, dislike_count")
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -453,6 +677,12 @@ async function loadArticles() {
   }
 
   state.articles = data || [];
+
+  if (state.user) {
+    await loadUserVotes();
+    await loadUserReports();
+  }
+
   applySearchAndRender();
 
   if (state.page === "admin") {
@@ -460,18 +690,67 @@ async function loadArticles() {
   }
 }
 
+async function loadUserVotes() {
+  if (!state.user) return;
+  const { data, error } = await supabase
+    .from("article_votes")
+    .select("article_id, vote_type")
+    .eq("user_id", state.user.id);
+
+  if (!error && data) {
+    state.userVotes = {};
+    data.forEach(v => { state.userVotes[v.article_id] = v.vote_type; });
+  }
+}
+
+async function loadUserReports() {
+  if (!state.user) return;
+  const { data, error } = await supabase
+    .from("article_reports")
+    .select("article_id")
+    .eq("user_id", state.user.id);
+
+  if (!error && data) {
+    state.userReports = {};
+    data.forEach(r => { state.userReports[r.article_id] = true; });
+  }
+}
+
 function handleSearch() {
   state.search = dom.searchInput?.value.trim().toLowerCase() || "";
+
+  if (dom.explorePanel) {
+    const hasSearch = state.search.length > 0;
+    dom.explorePanel.classList.toggle("hidden", !hasSearch);
+  }
+
   applySearchAndRender();
 }
 
 function applySearchAndRender() {
   const query = state.search;
-  state.filteredArticles = state.articles.filter((article) => {
-    const haystack = `${article.title} ${article.content} ${article.author_name}`.toLowerCase();
-    return !query || haystack.includes(query);
-  });
+  let result = state.articles;
+
+  if (state.activeCategory && state.activeCategory !== "all") {
+    result = result.filter(a => a.category === state.activeCategory);
+  }
+
+  if (query) {
+    result = result.filter((article) => {
+      const haystack = `${article.title} ${article.content} ${article.author_name}`.toLowerCase();
+      return haystack.includes(query);
+    });
+  }
+
+  if (state.activeFeedTab === "following" && state.user) {
+    result = result.filter(a => a.author_id === state.user?.id);
+  } else if (state.activeFeedTab === "following" && !state.user) {
+    result = [];
+  }
+
+  state.filteredArticles = result;
   renderArticles();
+  renderExploreResults();
 }
 
 function renderArticles() {
@@ -494,6 +773,10 @@ function renderArticles() {
     const image = node.querySelector(".card-image");
     const author = node.querySelector(".card-author");
     const date = node.querySelector(".card-date");
+    const viewCount = node.querySelector(".card-view-count");
+    const likeNum = node.querySelector(".like-num");
+    const dislikeNum = node.querySelector(".dislike-num");
+    const viewNum = node.querySelector(".view-num");
     const title = node.querySelector(".card-title");
     const text = node.querySelector(".card-text");
     const button = node.querySelector(".open-article");
@@ -504,6 +787,10 @@ function renderArticles() {
     }
     if (author) author.textContent = article.author_name || "Daily News";
     if (date) date.textContent = formatDate(article.created_at);
+    if (viewCount) viewCount.textContent = `${formatNumber(article.view_count || 0)} views`;
+    if (likeNum) likeNum.textContent = formatNumber(article.like_count || 0);
+    if (dislikeNum) dislikeNum.textContent = formatNumber(article.dislike_count || 0);
+    if (viewNum) viewNum.textContent = formatNumber(article.view_count || 0);
     if (title) title.textContent = article.title;
     if (text) text.textContent = truncateText(article.content, 160);
 
@@ -532,12 +819,212 @@ function renderArticles() {
   });
 }
 
-// ================= MODAL & COMMENTS =================
+function renderExploreResults() {
+  if (!dom.exploreResults) return;
+
+  const query = state.search;
+  if (!query) {
+    dom.exploreResults.innerHTML = "";
+    return;
+  }
+
+  const results = state.articles.filter((article) => {
+    const haystack = `${article.title} ${article.content} ${article.author_name}`.toLowerCase();
+    return haystack.includes(query);
+  }).slice(0, 5);
+
+  if (!results.length) {
+    dom.exploreResults.innerHTML = `<p class="muted" style="padding:12px;">No results found for "${escapeHTML(query)}"</p>`;
+    return;
+  }
+
+  dom.exploreResults.innerHTML = results.map(article => `
+    <div class="trend-item" data-explore-article="${article.id}" style="cursor:pointer;">
+      <span class="trend-meta">${escapeHTML(article.category || 'News')} · ${formatDate(article.created_at)}</span>
+      <span class="trend-title">${escapeHTML(article.title)}</span>
+    </div>
+  `).join("");
+
+  dom.exploreResults.querySelectorAll("[data-explore-article]").forEach(el => {
+    el.addEventListener("click", () => {
+      const id = el.dataset.exploreArticle;
+      openArticleModal(id);
+      if (dom.searchInput) dom.searchInput.value = "";
+      state.search = "";
+      if (dom.explorePanel) dom.explorePanel.classList.add("hidden");
+      applySearchAndRender();
+    });
+  });
+}
+
+/* ================= VIEWS ================= */
+async function incrementViewCount(articleId) {
+  try {
+    await supabase.rpc('increment_article_views', { article_id: articleId });
+  } catch (e) {
+    const article = state.articles.find(a => a.id === articleId);
+    if (article) {
+      const newCount = (article.view_count || 0) + 1;
+      await supabase.from("news_articles").update({ view_count: newCount }).eq("id", articleId);
+    }
+  }
+  await loadArticles();
+}
+
+/* ================= VOTES ================= */
+async function handleVote(voteType) {
+  if (!state.user) {
+    alert("Please sign in to vote.");
+    return;
+  }
+  if (!state.selectedArticle) return;
+
+  const articleId = state.selectedArticle.id;
+  const currentVote = state.userVotes[articleId];
+
+  try {
+    if (currentVote === voteType) {
+      await supabase.from("article_votes").delete()
+        .eq("article_id", articleId)
+        .eq("user_id", state.user.id);
+
+      const field = voteType === 'like' ? 'like_count' : 'dislike_count';
+      const current = state.selectedArticle[field] || 0;
+      await supabase.from("news_articles").update({ [field]: Math.max(0, current - 1) }).eq("id", articleId);
+
+      delete state.userVotes[articleId];
+    } else {
+      if (currentVote) {
+        await supabase.from("article_votes").delete()
+          .eq("article_id", articleId)
+          .eq("user_id", state.user.id);
+
+        const oldField = currentVote === 'like' ? 'like_count' : 'dislike_count';
+        const oldCurrent = state.selectedArticle[oldField] || 0;
+        await supabase.from("news_articles").update({ [oldField]: Math.max(0, oldCurrent - 1) }).eq("id", articleId);
+      }
+
+      await supabase.from("article_votes").insert({
+        article_id: articleId,
+        user_id: state.user.id,
+        vote_type: voteType
+      });
+
+      const field = voteType === 'like' ? 'like_count' : 'dislike_count';
+      const current = state.selectedArticle[field] || 0;
+      await supabase.from("news_articles").update({ [field]: current + 1 }).eq("id", articleId);
+
+      state.userVotes[articleId] = voteType;
+    }
+
+    await loadArticles();
+    updateModalVoteUI();
+  } catch (error) {
+    console.error("Vote error:", error);
+    alert("Failed to register vote. Please try again.");
+  }
+}
+
+function updateModalVoteUI() {
+  if (!state.selectedArticle) return;
+
+  const articleId = state.selectedArticle.id;
+  const currentVote = state.userVotes[articleId];
+
+  if (dom.modalLikeBtn) {
+    dom.modalLikeBtn.classList.toggle('active', currentVote === 'like');
+  }
+  if (dom.modalDislikeBtn) {
+    dom.modalDislikeBtn.classList.toggle('active', currentVote === 'dislike');
+  }
+
+  const article = state.articles.find(a => a.id === articleId);
+  if (article) {
+    if (dom.modalLikeCount) dom.modalLikeCount.textContent = formatNumber(article.like_count || 0);
+    if (dom.modalDislikeCount) dom.modalDislikeCount.textContent = formatNumber(article.dislike_count || 0);
+    if (dom.modalViewCount) dom.modalViewCount.textContent = formatNumber(article.view_count || 0);
+  }
+}
+
+/* ================= REPORT ================= */
+function openReportModal() {
+  if (!state.user) {
+    alert("Please sign in to report content.");
+    return;
+  }
+  if (!state.selectedArticle) return;
+
+  if (state.userReports[state.selectedArticle.id]) {
+    alert("You have already reported this article.");
+    return;
+  }
+
+  if (dom.reportModal) {
+    dom.reportModal.classList.remove("hidden");
+    dom.reportModal.setAttribute("aria-hidden", "false");
+  }
+  if (dom.reportForm) dom.reportForm.reset();
+  if (dom.reportMessage) dom.reportMessage.textContent = "";
+}
+
+function closeReportModal() {
+  if (dom.reportModal) {
+    dom.reportModal.classList.add("hidden");
+    dom.reportModal.setAttribute("aria-hidden", "true");
+  }
+}
+
+async function handleReport(event) {
+  event.preventDefault();
+  if (!state.user || !state.selectedArticle) return;
+
+  const formData = new FormData(dom.reportForm);
+  const reason = formData.get("reportReason");
+  const details = dom.reportDetails?.value.trim() || "";
+
+  if (!reason) {
+    setMessage("report", "Please select a reason.");
+    return;
+  }
+
+  try {
+    const { error } = await supabase.from("article_reports").insert({
+      article_id: state.selectedArticle.id,
+      user_id: state.user.id,
+      user_name: state.profile?.full_name || state.user.email || "Anonymous",
+      reason: reason,
+      details: details,
+      status: "pending"
+    });
+
+    if (error) throw error;
+
+    state.userReports[state.selectedArticle.id] = true;
+    setMessage("report", "Report submitted successfully. Thank you for helping keep our community safe.");
+
+    if (dom.modalReportBtn) {
+      dom.modalReportBtn.classList.add('active');
+      const span = dom.modalReportBtn.querySelector('span');
+      if (span) span.textContent = 'Reported';
+    }
+
+    setTimeout(() => {
+      closeReportModal();
+    }, 1500);
+  } catch (error) {
+    console.error("Report error:", error);
+    setMessage("report", "Failed to submit report. Please try again.");
+  }
+}
+
+/* ================= MODAL & COMMENTS ================= */
 async function openArticleModal(articleId) {
   const article = state.articles.find((item) => item.id === articleId);
   if (!article || !dom.articleModal) return;
 
   state.selectedArticle = article;
+
+  await incrementViewCount(articleId);
 
   if (dom.modalImage) {
     dom.modalImage.src = article.image_url || PLACEHOLDER_IMAGE;
@@ -553,6 +1040,15 @@ async function openArticleModal(articleId) {
     } else {
       dom.modalContent.textContent = article.content;
     }
+  }
+
+  updateModalVoteUI();
+
+  if (dom.modalReportBtn) {
+    const hasReported = state.userReports[articleId];
+    dom.modalReportBtn.classList.toggle('active', hasReported);
+    const span = dom.modalReportBtn.querySelector('span');
+    if (span) span.textContent = hasReported ? 'Reported' : 'Report';
   }
 
   dom.articleModal.classList.remove("hidden");
@@ -599,7 +1095,6 @@ async function loadComments(articleId) {
   }
 
   state.comments = data || [];
-  if (dom.modalCommentCount) dom.modalCommentCount.textContent = state.comments.length;
   renderComments();
 }
 
@@ -773,7 +1268,7 @@ async function deleteComment(commentId) {
   await loadArticles();
 }
 
-// ================= ADMIN AREA =================
+/* ================= ADMIN AREA ================= */
 async function renderAdminArea() {
   if (state.page !== "admin") return;
 
@@ -791,6 +1286,11 @@ async function renderAdminArea() {
 
   if (dom.statArticles) dom.statArticles.textContent = String(state.articles.length);
 
+  const totalViews = state.articles.reduce((sum, a) => sum + (a.view_count || 0), 0);
+  const totalLikes = state.articles.reduce((sum, a) => sum + (a.like_count || 0), 0);
+  if (dom.statTotalViews) dom.statTotalViews.textContent = formatNumber(totalViews);
+  if (dom.statTotalLikes) dom.statTotalLikes.textContent = formatNumber(totalLikes);
+
   const { data: commentsData, error: commentsError } = await supabase
     .from("article_comments")
     .select("id, article_id, user_id, user_name, body, created_at")
@@ -800,8 +1300,18 @@ async function renderAdminArea() {
   state.adminComments = commentsError ? [] : commentsData || [];
   if (dom.statComments) dom.statComments.textContent = String(state.adminComments.length);
 
+  const { data: reportsData, error: reportsError } = await supabase
+    .from("article_reports")
+    .select("id, article_id, user_id, user_name, reason, details, status, created_at")
+    .order("created_at", { ascending: false })
+    .limit(50);
+
+  state.adminReports = reportsError ? [] : reportsData || [];
+  if (dom.statReports) dom.statReports.textContent = String(state.adminReports.length);
+
   renderAdminArticles();
   renderAdminComments();
+  renderAdminReports();
 }
 
 function renderAdminArticles() {
@@ -827,6 +1337,11 @@ function renderAdminArticles() {
               </div>
               <span class="pill">${formatDate(article.created_at)}</span>
             </div>
+            <div class="admin-item-stats">
+              <span class="pill">👁 ${formatNumber(article.view_count || 0)}</span>
+              <span class="pill">❤️ ${formatNumber(article.like_count || 0)}</span>
+              <span class="pill">👎 ${formatNumber(article.dislike_count || 0)}</span>
+            </div>
             <div class="admin-item-actions">
               <button class="x-btn-action secondary btn-sm" type="button" data-edit-article="${article.id}">Edit</button>
               <button class="x-btn-action btn-sm" type="button" data-delete-article="${article.id}" style="background:var(--danger-light);color:var(--danger);border:none;">Delete</button>
@@ -847,15 +1362,15 @@ function renderAdminArticles() {
 }
 
 function renderAdminComments() {
-  if (!dom.adminComments) return;
+  if (!dom.adminCommentsList) return;
 
   if (!state.adminComments.length) {
-    dom.adminComments.innerHTML = `<p class="muted">No comments to manage.</p>`;
+    dom.adminCommentsList.innerHTML = `<p class="muted">No comments to manage.</p>`;
     return;
   }
 
   const articleMap = new Map(state.articles.map((article) => [article.id, article.title]));
-  dom.adminComments.innerHTML = state.adminComments
+  dom.adminCommentsList.innerHTML = state.adminComments
     .map((comment) => {
       const title = articleMap.get(comment.article_id) || "Unknown article";
       return `
@@ -874,9 +1389,70 @@ function renderAdminComments() {
     })
     .join("");
 
-  $$("[data-delete-comment-admin]", dom.adminComments).forEach((button) => {
+  $$("[data-delete-comment-admin]", dom.adminCommentsList).forEach((button) => {
     button.addEventListener("click", () => deleteComment(button.dataset.deleteCommentAdmin));
   });
+}
+
+function renderAdminReports() {
+  if (!dom.adminReportsList) return;
+
+  if (!state.adminReports.length) {
+    dom.adminReportsList.innerHTML = `<p class="muted">No reports to review.</p>`;
+    return;
+  }
+
+  const articleMap = new Map(state.articles.map((article) => [article.id, article.title]));
+
+  dom.adminReportsList.innerHTML = state.adminReports
+    .map((report) => {
+      const title = articleMap.get(report.article_id) || "Unknown article";
+      return `
+        <article class="report-item">
+          <div class="report-item-header">
+            <strong>${escapeHTML(report.reason)}</strong>
+            <span class="pill">${report.status || 'pending'}</span>
+          </div>
+          <p>${escapeHTML(report.details || 'No additional details')}</p>
+          <div class="report-item-footer">
+            <span>By ${escapeHTML(report.user_name || 'Anonymous')} · ${formatDate(report.created_at)}</span>
+            <span class="pill">${escapeHTML(title)}</span>
+          </div>
+          <div class="admin-item-actions" style="margin-top:8px;">
+            ${report.status !== 'resolved' ? `<button class="x-btn-action secondary btn-sm" type="button" data-resolve-report="${report.id}">Mark Resolved</button>` : ''}
+            <button class="x-btn-action btn-sm" type="button" data-dismiss-report="${report.id}" style="background:var(--danger-light);color:var(--danger);border:none;">Dismiss</button>
+          </div>
+        </article>
+      `;
+    })
+    .join("");
+
+  $$("[data-resolve-report]", dom.adminReportsList).forEach((button) => {
+    button.addEventListener("click", () => resolveReport(button.dataset.resolveReport));
+  });
+
+  $$("[data-dismiss-report]", dom.adminReportsList).forEach((button) => {
+    button.addEventListener("click", () => dismissReport(button.dataset.dismissReport));
+  });
+}
+
+async function resolveReport(reportId) {
+  const { error } = await supabase.from("article_reports").update({ status: "resolved" }).eq("id", reportId);
+  if (error) {
+    alert(error.message);
+    return;
+  }
+  await renderAdminArea();
+}
+
+async function dismissReport(reportId) {
+  if (!confirm("Dismiss this report?")) return;
+  const { error } = await supabase.from("article_reports").delete().eq("id", reportId);
+  if (error) {
+    alert(error.message);
+    return;
+  }
+  await renderAdminArea();
 }
 
 function editArticle(articleId) {
@@ -992,7 +1568,7 @@ async function handleSaveArticle(event) {
     } else {
       const { error: insertError } = await supabase
         .from("news_articles")
-        .insert(payload);
+        .insert({ ...payload, view_count: 0, like_count: 0, dislike_count: 0 });
 
       if (insertError) {
         if (/row-level security/i.test(insertError.message || "")) {
@@ -1035,7 +1611,7 @@ async function deleteArticle(articleId) {
   await loadArticles();
 }
 
-// ================= STORAGE =================
+/* ================= STORAGE ================= */
 async function uploadImage(file) {
   const ext = (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
   const uuid = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
